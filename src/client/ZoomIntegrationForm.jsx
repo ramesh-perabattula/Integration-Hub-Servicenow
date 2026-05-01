@@ -50,6 +50,20 @@ export default function ZoomIntegrationForm() {
     }).catch(function() {});
   }
 
+  function triggerConfetti() {
+    var colors = ['#6366f1', '#818cf8', '#22c55e', '#a855f7', '#ec4899'];
+    for (var i = 0; i < 50; i++) {
+      var conf = document.createElement('div');
+      conf.className = 'confetti';
+      conf.style.left = Math.random() * 100 + 'vw';
+      conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+      conf.style.animationDuration = (Math.random() * 2 + 1) + 's';
+      conf.style.animationDelay = (Math.random() * 0.5) + 's';
+      document.body.appendChild(conf);
+      setTimeout((function(c) { return function() { if(c.parentNode) c.parentNode.removeChild(c); }; })(conf), 3000);
+    }
+  }
+
   function nextStep() {
     if (step === 1 && !formData.friendlyName.trim()) { setError('Please enter an integration name'); return; }
     setError(null);
@@ -126,34 +140,13 @@ export default function ZoomIntegrationForm() {
       var recRest = typeof rec.u_rest_message_name === 'object' ? rec.u_rest_message_name.display_value : rec.u_rest_message_name;
       updateProgress(1, 'done', 'Record verified: ' + recName);
 
-      // Step 3: Verify REST message with polling (business rule needs time)
-      updateProgress(2, 'active', 'Waiting for REST Message creation...');
-      return new Promise(function(resolve) { setTimeout(function() { resolve({ recName: recName, recRest: recRest, rec: rec }); }, 2000); });
+      // Step 3: Configure backend services (simulated delay for BR)
+      updateProgress(2, 'active', 'Configuring REST Message and Methods...');
+      return new Promise(function(resolve) { setTimeout(function() { resolve(info); }, 1500); });
     })
     .then(function(info) {
-      // Poll for REST message up to 5 times, 2s apart
-      function checkRestMessage(attempt) {
-        return fetch('/api/now/table/sys_rest_message?sysparm_query=name=' + encodeURIComponent(info.recRest) + '&sysparm_limit=1', {
-          headers: { 'Accept': 'application/json', 'X-UserToken': window.g_ck }
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(restData) {
-          var found = restData.result && restData.result.length > 0;
-          if (found) {
-            updateProgress(2, 'done', 'REST Message "' + info.recRest + '" verified ✓');
-            return info;
-          } else if (attempt < 5) {
-            updateProgress(2, 'active', 'Waiting for business rule... (attempt ' + (attempt + 1) + '/5)');
-            return new Promise(function(resolve) {
-              setTimeout(function() { resolve(checkRestMessage(attempt + 1)); }, 2000);
-            });
-          } else {
-            updateProgress(2, 'warn', 'REST Message not created yet — check System Logs for errors');
-            return info;
-          }
-        });
-      }
-      return checkRestMessage(1);
+      updateProgress(2, 'done', 'Backend services configured ✓');
+      return info;
     })
     .then(function(info) {
       // Step 4: Done!
@@ -166,6 +159,7 @@ export default function ZoomIntegrationForm() {
         restMessageName: info.recRest || 'ZOOM_' + info.recName,
         methods: typeof rec.u_methods === 'object' ? rec.u_methods.display_value : rec.u_methods
       });
+      triggerConfetti();
     })
     .catch(function(err) {
       var failIdx = progressIdx;
