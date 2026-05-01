@@ -135,7 +135,7 @@ export function createZoomREST(current, previous) {
         gs.info('Integration Hub: Successfully created Zoom integration "' + name + '" with REST Message "' + restMessageName + '"');
 
     } catch (error) {
-        gs.error('Integration Hub: Error creating Zoom integration — ' + error.getMessage());
+        gs.error('Integration Hub: Error creating Zoom integration — ' + ((error.getMessage ? error.getMessage() : error.message) || String(error)));
     }
 }
 

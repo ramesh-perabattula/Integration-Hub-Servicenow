@@ -110,7 +110,7 @@ UniversalAuthManager.prototype = {
             return profileSysId;
 
         } catch (error) {
-            gs.error('UniversalAuthManager.createOAuthProfile — Error: ' + error.getMessage());
+            gs.error('UniversalAuthManager.createOAuthProfile — Error: ' + ((error.getMessage ? error.getMessage() : error.message) || String(error)));
             return null;
         }
     },

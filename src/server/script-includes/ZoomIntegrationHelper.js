@@ -77,7 +77,7 @@ IntegrationHelper.prototype = {
 
         } catch (error) {
             status = 'failure';
-            errorMessage = error.getMessage();
+            errorMessage = (error.getMessage ? error.getMessage() : error.message) || String(error);
             responseBody = 'Error: ' + errorMessage;
         }
 
@@ -247,7 +247,7 @@ IntegrationHelper.prototype = {
             logRecord.insert();
 
         } catch (e) {
-            gs.error('IntegrationHelper: Failed to log execution — ' + e.getMessage());
+            gs.error('IntegrationHelper: Failed to log execution — ' + ((e.getMessage ? e.getMessage() : e.message) || String(e)));
         }
     },
 
