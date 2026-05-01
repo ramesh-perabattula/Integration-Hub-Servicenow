@@ -5,6 +5,14 @@ declare global {
         namespace Internal {
             interface Keys extends KeysRegistry {
                 explicit: {
+                    '0c0088dec3a0cf10a6d4e04bb001315c': {
+                        table: 'sys_scope_privilege'
+                        id: '0c0088dec3a0cf10a6d4e04bb001315c'
+                    }
+                    '180088dec3a0cf10a6d4e04bb00131c8': {
+                        table: 'sys_scope_privilege'
+                        id: '180088dec3a0cf10a6d4e04bb00131c8'
+                    }
                     bom_json: {
                         table: 'sys_module'
                         id: '0f06005d6c6b474798faca8aee7b5ab7'
@@ -13,6 +21,10 @@ declare global {
                         table: 'sys_script'
                         id: '2ddf76db3152484b97583d8a9928320f'
                     }
+                    cc0088dec3a0cf10a6d4e04bb0013154: {
+                        table: 'sys_scope_privilege'
+                        id: 'cc0088dec3a0cf10a6d4e04bb0013154'
+                    }
                     create_zoom_rest_br: {
                         table: 'sys_script'
                         id: '595e7c1994b544e0b384c1a8c984388c'
@@ -20,6 +32,10 @@ declare global {
                     cs0: {
                         table: 'sys_script_client'
                         id: '6573ecce6b5a4d51ab31ab8346f516fb'
+                    }
+                    d40088dec3a0cf10a6d4e04bb00131c4: {
+                        table: 'sys_scope_privilege'
+                        id: 'd40088dec3a0cf10a6d4e04bb00131c4'
                     }
                     global_integration_helper: {
                         table: 'sys_script_include'
