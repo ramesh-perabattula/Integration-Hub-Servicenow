@@ -1,199 +1,100 @@
 import { gs, GlideRecord } from '@servicenow/glide';
 
+/**
+ * Business Rule: Auto-creates Zoom REST Message + HTTP Methods
+ * Fires: AFTER INSERT on x_1842120_hubby_u_zoom_integration
+ *
+ * DESIGN: Completely self-contained — no external script include calls.
+ * This avoids scoped app resolution issues with UniversalAuthManager.
+ */
 export function createZoomREST(current, previous) {
     try {
         var name = current.getValue('u_name');
-
         if (!name) {
-            gs.error('Integration Hub: No name provided for Zoom integration');
+            gs.error('Integration Hub: No name provided');
             return;
         }
 
         var restMessageName = 'ZOOM_' + name;
+        gs.info('Integration Hub: Starting REST Message creation for "' + name + '"');
 
-        // Check if REST Message already exists
-        var existingRestMsg = new GlideRecord('sys_rest_message');
-        existingRestMsg.addQuery('name', restMessageName);
-        existingRestMsg.query();
-
-        if (existingRestMsg.next()) {
-            gs.info('REST Message ' + restMessageName + ' already exists — skipping creation');
-            // Still update the record with the REST message name if missing
-            if (!current.getValue('u_rest_message_name')) {
-                current.setWorkflow(false);
-                current.setValue('u_rest_message_name', restMessageName);
-                current.update();
-            }
+        // ── Step 1: Check if REST Message already exists ──
+        var existingMsg = new GlideRecord('sys_rest_message');
+        existingMsg.addQuery('name', restMessageName);
+        existingMsg.query();
+        if (existingMsg.next()) {
+            gs.info('Integration Hub: REST Message "' + restMessageName + '" already exists — skipping');
             return;
         }
 
-        // Try to create OAuth profile (non-blocking — REST message creation should proceed regardless)
-        var oauthProfileSysId = null;
-        try {
-            var authManager = new UniversalAuthManager();
-            oauthProfileSysId = authManager.createOAuthProfile(current);
-        } catch (oauthErr) {
-            gs.warn('Integration Hub: OAuth profile creation skipped — ' + ((oauthErr.getMessage ? oauthErr.getMessage() : oauthErr.message) || String(oauthErr)));
-            gs.warn('Integration Hub: You can manually configure OAuth for REST Message: ' + restMessageName);
-        }
+        // ── Step 2: Create REST Message ──
+        var restMsg = new GlideRecord('sys_rest_message');
+        restMsg.initialize();
+        restMsg.setValue('name', restMessageName);
+        restMsg.setValue('endpoint', 'https://api.zoom.us/v2');
+        restMsg.setValue('authentication_type', 'no_authentication');
+        restMsg.setValue('description', 'Zoom API — auto-created by Integration Hub for "' + name + '"');
+        var restMsgId = restMsg.insert();
 
-        // Create the REST Message with OAuth2 auth
-        var restMessage = new GlideRecord('sys_rest_message');
-        restMessage.initialize();
-        restMessage.setValue('name', restMessageName);
-        restMessage.setValue('endpoint', 'https://api.zoom.us/v2');
-        restMessage.setValue('description', 'Zoom API integration for ' + name + ' — auto-created by Integration Hub');
-
-        // Set auth type based on whether OAuth profile was created
-        if (oauthProfileSysId) {
-            restMessage.setValue('authentication_type', 'oauth2');
-            restMessage.setValue('oauth2_profile', oauthProfileSysId);
-        } else {
-            restMessage.setValue('authentication_type', 'no_authentication');
-        }
-
-        var restMessageSysId = restMessage.insert();
-
-        if (!restMessageSysId) {
-            gs.error('Integration Hub: Failed to create REST Message for ' + name);
+        if (!restMsgId) {
+            gs.error('Integration Hub: Failed to insert REST Message for "' + name + '"');
             return;
         }
+        gs.info('Integration Hub: Created REST Message "' + restMessageName + '" (sys_id: ' + restMsgId + ')');
 
-        gs.info('Created REST Message: ' + restMessageName);
+        // ── Step 3: Create HTTP Methods ──
+        var methods = current.getValue('u_methods') || 'POST,GET,PATCH,DELETE';
+        var parts = methods.split(',');
 
-        // Parse methods from the record
-        var methods = current.getValue('u_methods');
-        var methodList = [];
+        for (var i = 0; i < parts.length; i++) {
+            var verb = parts[i].trim().toUpperCase();
+            if (!verb) continue;
 
-        if (methods) {
-            var parts = methods.split(',');
-            for (var i = 0; i < parts.length; i++) {
-                var trimmed = parts[i].trim().toUpperCase();
-                if (trimmed) {
-                    methodList.push(trimmed);
-                }
-            }
-        }
-
-        // If no methods specified, create all 4 by default
-        if (methodList.length === 0) {
-            methodList = ['POST', 'GET', 'PATCH', 'DELETE'];
-        }
-
-        // Create HTTP Methods based on selected methods
-        for (var m = 0; m < methodList.length; m++) {
-            var httpVerb = methodList[m];
-
-            switch (httpVerb) {
+            switch (verb) {
                 case 'POST':
-                    createHttpMethod(
-                        restMessageSysId,
-                        'create_meeting',
-                        'POST',
-                        '/users/me/meetings',
-                        '{\n  "topic": "${topic}",\n  "type": 2,\n  "duration": "${duration}"\n}',
-                        'application/json'
-                    );
+                    _createMethod(restMsgId, 'create_meeting', 'POST', '/users/me/meetings',
+                        '{\n  "topic": "${topic}",\n  "type": 2,\n  "duration": "${duration}"\n}');
                     break;
-
                 case 'GET':
-                    createHttpMethod(
-                        restMessageSysId,
-                        'get_meeting',
-                        'GET',
-                        '/meetings/${meetingId}',
-                        '',
-                        'application/json'
-                    );
+                    _createMethod(restMsgId, 'get_meeting', 'GET', '/meetings/${meetingId}', '');
                     break;
-
                 case 'PATCH':
-                    createHttpMethod(
-                        restMessageSysId,
-                        'update_meeting',
-                        'PATCH',
-                        '/meetings/${meetingId}',
-                        '{\n  "topic": "${topic}",\n  "duration": "${duration}"\n}',
-                        'application/json'
-                    );
+                    _createMethod(restMsgId, 'update_meeting', 'PATCH', '/meetings/${meetingId}',
+                        '{\n  "topic": "${topic}",\n  "duration": "${duration}"\n}');
                     break;
-
                 case 'DELETE':
-                    createHttpMethod(
-                        restMessageSysId,
-                        'delete_meeting',
-                        'DELETE',
-                        '/meetings/${meetingId}',
-                        '',
-                        'application/json'
-                    );
+                    _createMethod(restMsgId, 'delete_meeting', 'DELETE', '/meetings/${meetingId}', '');
                     break;
-
-                default:
-                    gs.warn('Integration Hub: Unknown HTTP method: ' + httpVerb);
             }
         }
 
-        // Safety net: ensure u_rest_message_name is set
-        // The client already sends this field in the POST body, but this covers
-        // cases where the record is created directly in the table (not via the form)
-        try {
-            if (!current.getValue('u_rest_message_name')) {
-                current.setWorkflow(false);
-                current.setValue('u_rest_message_name', restMessageName);
-                current.update();
-                gs.info('Integration Hub: Updated u_rest_message_name to "' + restMessageName + '"');
-            }
-        } catch (updateErr) {
-            gs.warn('Integration Hub: Could not update u_rest_message_name (non-critical) — ' + ((updateErr.getMessage ? updateErr.getMessage() : updateErr.message) || String(updateErr)));
-        }
+        gs.info('Integration Hub: Zoom integration "' + name + '" created successfully');
 
-        gs.info('Integration Hub: Successfully created Zoom integration "' + name + '" with REST Message "' + restMessageName + '"');
-
-    } catch (error) {
-        gs.error('Integration Hub: Error creating Zoom integration — ' + ((error.getMessage ? error.getMessage() : error.message) || String(error)));
+    } catch (err) {
+        gs.error('Integration Hub: ' + ((err.getMessage ? err.getMessage() : err.message) || String(err)));
     }
 }
 
-/**
- * Creates an HTTP Method record (sys_rest_message_fn) with body template and headers.
- */
-function createHttpMethod(restMessageSysId, methodName, httpMethod, endpoint, bodyTemplate, contentType) {
-    var httpMethodRecord = new GlideRecord('sys_rest_message_fn');
-    httpMethodRecord.initialize();
-    httpMethodRecord.setValue('rest_message', restMessageSysId);
-    httpMethodRecord.setValue('function_name', methodName);
-    httpMethodRecord.setValue('http_method', httpMethod);
-    httpMethodRecord.setValue('rest_endpoint', endpoint);
-
-    // Set body template to resolve ${variable} placeholders
+function _createMethod(restMsgId, funcName, httpMethod, endpoint, bodyTemplate) {
+    var method = new GlideRecord('sys_rest_message_fn');
+    method.initialize();
+    method.setValue('rest_message', restMsgId);
+    method.setValue('function_name', funcName);
+    method.setValue('http_method', httpMethod);
+    method.setValue('rest_endpoint', endpoint);
     if (bodyTemplate) {
-        httpMethodRecord.setValue('content', bodyTemplate);
+        method.setValue('content', bodyTemplate);
     }
+    var methodId = method.insert();
 
-    var httpMethodSysId = httpMethodRecord.insert();
-
-    if (!httpMethodSysId) {
-        gs.error('Integration Hub: Failed to create HTTP Method: ' + methodName);
-        return;
+    if (methodId) {
+        // Add Content-Type header
+        var header = new GlideRecord('sys_rest_message_fn_headers');
+        header.initialize();
+        header.setValue('rest_message_fn', methodId);
+        header.setValue('name', 'Content-Type');
+        header.setValue('value', 'application/json');
+        header.insert();
+        gs.info('Integration Hub: Created method ' + funcName + ' (' + httpMethod + ')');
     }
-
-    // Create Content-Type header
-    if (contentType) {
-        createHttpHeader(httpMethodSysId, 'Content-Type', contentType);
-    }
-
-    gs.info('Created HTTP Method: ' + methodName + ' (' + httpMethod + ')');
-}
-
-/**
- * Creates an HTTP header record for an HTTP method.
- */
-function createHttpHeader(httpMethodSysId, headerName, headerValue) {
-    var header = new GlideRecord('sys_rest_message_fn_headers');
-    header.initialize();
-    header.setValue('rest_message_fn', httpMethodSysId);
-    header.setValue('name', headerName);
-    header.setValue('value', headerValue);
-    header.insert();
 }
