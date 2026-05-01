@@ -55,11 +55,13 @@ export default function ZoomIntegrationForm() {
     setIsSubmitting(true);
     setError(null);
 
+    var restMessageName = 'ZOOM_' + formData.friendlyName;
     var requestData = {
       u_name: formData.friendlyName,
       u_client_id: formData.clientId,
       u_client_secret: formData.clientSecret,
       u_methods: formData.methods.join(','),
+      u_rest_message_name: restMessageName,
       u_status: 'active'
     };
 

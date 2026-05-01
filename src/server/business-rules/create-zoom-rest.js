@@ -126,11 +126,19 @@ export function createZoomREST(current, previous) {
             }
         }
 
-        // CRITICAL FIX: Persist the REST message name back to the record
-        // setWorkflow(false) prevents this update from re-triggering business rules
-        current.setWorkflow(false);
-        current.setValue('u_rest_message_name', restMessageName);
-        current.update();
+        // Safety net: ensure u_rest_message_name is set
+        // The client already sends this field in the POST body, but this covers
+        // cases where the record is created directly in the table (not via the form)
+        try {
+            if (!current.getValue('u_rest_message_name')) {
+                current.setWorkflow(false);
+                current.setValue('u_rest_message_name', restMessageName);
+                current.update();
+                gs.info('Integration Hub: Updated u_rest_message_name to "' + restMessageName + '"');
+            }
+        } catch (updateErr) {
+            gs.warn('Integration Hub: Could not update u_rest_message_name (non-critical) — ' + ((updateErr.getMessage ? updateErr.getMessage() : updateErr.message) || String(updateErr)));
+        }
 
         gs.info('Integration Hub: Successfully created Zoom integration "' + name + '" with REST Message "' + restMessageName + '"');
 
