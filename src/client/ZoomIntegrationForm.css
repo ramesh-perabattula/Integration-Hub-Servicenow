@@ -1,0 +1,482 @@
+/* Universal Integration Hub - Modern UI Design */
+
+.integration-hub-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+.main-card, .success-card {
+  max-width: 700px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(79, 70, 229, 0.1);
+  overflow: hidden;
+}
+
+/* Header Section */
+.header-section {
+  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+  color: white;
+  padding: 40px 30px;
+  text-align: center;
+}
+
+.main-title {
+  margin: 0 0 10px 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 1.1rem;
+  opacity: 0.9;
+  font-weight: 400;
+}
+
+/* Form Styles */
+.integration-form {
+  padding: 40px 30px;
+}
+
+.fields-section {
+  margin-top: 20px;
+}
+
+.field-group {
+  margin-bottom: 24px;
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.95rem;
+}
+
+.required {
+  color: #EF4444;
+  font-weight: bold;
+}
+
+.field-input, .field-select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  background-color: white;
+}
+
+.field-input:focus, .field-select:focus {
+  outline: none;
+  border-color: #4F46E5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  transform: translateY(-1px);
+}
+
+.field-input:disabled, .field-select:disabled {
+  background-color: #F9FAFB;
+  color: #6B7280;
+  cursor: not-allowed;
+}
+
+.field-select {
+  cursor: pointer;
+}
+
+/* Checkbox Styles */
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.checkbox-item:hover {
+  background-color: #F3F4F6;
+}
+
+.checkbox-input {
+  width: 18px;
+  height: 18px;
+  accent-color: #4F46E5;
+  cursor: pointer;
+}
+
+.checkbox-label {
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+}
+
+/* Submit Button */
+.submit-btn {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(79, 70, 229, 0.2);
+}
+
+.submit-btn:disabled {
+  background: #9CA3AF;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.submit-btn.submitting {
+  background: #6B7280;
+}
+
+/* Spinner Animation */
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ffffff40;
+  border-top: 2px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error Alert */
+.error-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background-color: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 20px 30px;
+}
+
+.error-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.error-content {
+  color: #DC2626;
+  font-weight: 500;
+}
+
+/* Success Card */
+.success-card {
+  padding: 0;
+}
+
+.success-header {
+  background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
+  color: white;
+  padding: 40px 30px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.success-icon {
+  font-size: 3rem;
+}
+
+.success-header h2 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+/* Integration Details */
+.integration-details {
+  padding: 30px;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #F3F4F6;
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #374151;
+}
+
+.detail-value {
+  font-weight: 500;
+  color: #4F46E5;
+}
+
+/* Usage Section */
+.usage-section {
+  padding: 30px;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.section-title {
+  margin: 0 0 20px 0;
+  color: #374151;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.usage-option {
+  margin-bottom: 25px;
+}
+
+.option-title {
+  margin: 0 0 10px 0;
+  color: #4F46E5;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.code-block-container {
+  position: relative;
+  background-color: #1F2937;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.code-block {
+  background-color: #1F2937;
+  color: #F9FAFB;
+  padding: 20px;
+  margin: 0;
+  overflow-x: auto;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  white-space: pre;
+}
+
+.copy-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: white;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.copy-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Use Case Box */
+.use-case-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: #F0F9FF;
+  border: 1px solid #BAE6FD;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.use-case-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.use-case-text {
+  color: #0369A1;
+  font-weight: 500;
+}
+
+/* Developer Guide Section */
+.developer-guide {
+  padding: 30px;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.guide-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 10px 0;
+  transition: all 0.2s ease;
+}
+
+.guide-header:hover {
+  background-color: #F9FAFB;
+  margin: 0 -15px;
+  padding: 10px 15px;
+  border-radius: 6px;
+}
+
+.expand-icon {
+  font-size: 1.2rem;
+  color: #6B7280;
+  transition: transform 0.2s ease;
+}
+
+.guide-content {
+  margin-top: 20px;
+}
+
+.guide-item {
+  margin-bottom: 25px;
+}
+
+.guide-item-title {
+  margin: 0 0 12px 0;
+  color: #374151;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Flow Designer Note */
+.flow-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background-color: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.flow-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.flow-text {
+  color: #166534;
+}
+
+.flow-text strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.flow-text small {
+  color: #15803D;
+  font-size: 0.9rem;
+}
+
+/* Create Another Button */
+.create-another-btn {
+  width: 100%;
+  margin: 0 30px 30px 30px;
+  width: calc(100% - 60px);
+  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+  color: white;
+  border: none;
+  padding: 14px 20px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.create-another-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(79, 70, 229, 0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .integration-hub-container {
+    padding: 10px;
+  }
+
+  .main-card, .success-card {
+    margin: 0;
+    border-radius: 12px;
+  }
+
+  .header-section {
+    padding: 30px 20px;
+  }
+
+  .main-title {
+    font-size: 2rem;
+  }
+
+  .integration-form, .integration-details, .usage-section, .developer-guide {
+    padding: 20px;
+  }
+
+  .checkbox-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .copy-btn {
+    position: static;
+    margin-top: 10px;
+    width: 100%;
+  }
+
+  .code-block-container {
+    position: relative;
+  }
+}
+
+/* Additional utility classes */
+.text-center { text-align: center; }
+.mt-4 { margin-top: 1rem; }
+.mb-4 { margin-bottom: 1rem; }
+.p-4 { padding: 1rem; }
