@@ -8,10 +8,16 @@ declare global {
                     '0c0088dec3a0cf10a6d4e04bb001315c': {
                         table: 'sys_scope_privilege'
                         id: '0c0088dec3a0cf10a6d4e04bb001315c'
+                        deleted: true
                     }
                     '180088dec3a0cf10a6d4e04bb00131c8': {
                         table: 'sys_scope_privilege'
                         id: '180088dec3a0cf10a6d4e04bb00131c8'
+                        deleted: true
+                    }
+                    ai_assistant_helper: {
+                        table: 'sys_script_include'
+                        id: 'f0851da4b46c4840a440f0567618750b'
                     }
                     bom_json: {
                         table: 'sys_module'
@@ -24,10 +30,12 @@ declare global {
                     cc0088dec3a0cf10a6d4e04bb0013154: {
                         table: 'sys_scope_privilege'
                         id: 'cc0088dec3a0cf10a6d4e04bb0013154'
+                        deleted: true
                     }
                     create_zoom_rest_br: {
                         table: 'sys_script'
                         id: '595e7c1994b544e0b384c1a8c984388c'
+                        deleted: true
                     }
                     cs0: {
                         table: 'sys_script_client'
@@ -36,10 +44,19 @@ declare global {
                     d40088dec3a0cf10a6d4e04bb00131c4: {
                         table: 'sys_scope_privilege'
                         id: 'd40088dec3a0cf10a6d4e04bb00131c4'
+                        deleted: true
+                    }
+                    global_assistant_ui_script: {
+                        table: 'sys_ui_script'
+                        id: 'b9d5e07ed9354699ba75aadf52df3bfa'
                     }
                     global_integration_helper: {
                         table: 'sys_script_include'
                         id: '28c47bcbd23e40ffb8b0e66506e89bec'
+                    }
+                    integration_logs_module: {
+                        table: 'sys_app_module'
+                        id: '699a3901174a4442b17ac38a6d0e4695'
                     }
                     IntegrationHelper: {
                         table: 'sys_script_include'
@@ -53,6 +70,34 @@ declare global {
                         table: 'sys_module'
                         id: 'de43988a7ef04bf3a29e55e7a980ac29'
                     }
+                    priv_rest_msg_create: {
+                        table: 'sys_scope_privilege'
+                        id: 'fa184551c34344ecb35f326ac93a83d6'
+                    }
+                    priv_rest_msg_fn_create: {
+                        table: 'sys_scope_privilege'
+                        id: 'ff2b1086ef9b4be6897d25b73634d0ee'
+                    }
+                    priv_rest_msg_fn_headers_create: {
+                        table: 'sys_scope_privilege'
+                        id: 'a85b7c8ff2bb447299a7b307e8168cd5'
+                    }
+                    priv_rest_msg_fn_headers_write: {
+                        table: 'sys_scope_privilege'
+                        id: 'f96046e6418349c0896dc123c9d48344'
+                    }
+                    priv_rest_msg_fn_write: {
+                        table: 'sys_scope_privilege'
+                        id: 'e30d66041ff14eb58647167faa79e51b'
+                    }
+                    priv_rest_msg_read: {
+                        table: 'sys_scope_privilege'
+                        id: '6012f778f5e548a9871223b2d3785d41'
+                    }
+                    priv_rest_msg_write: {
+                        table: 'sys_scope_privilege'
+                        id: 'af2be4a0d9e84e6e90b3bb3b77fd08a7'
+                    }
                     'src_server_business-rules_create-zoom-rest_js': {
                         table: 'sys_module'
                         id: '8f6c4c47253a495aafde31621a9e1806'
@@ -60,6 +105,10 @@ declare global {
                     src_server_script_js: {
                         table: 'sys_module'
                         id: '2c4f46edf03a4af18e33a150bcb6c904'
+                    }
+                    'src_server_script-includes_AiAssistantHelper_js': {
+                        table: 'sys_module'
+                        id: '2b260c9b0da0421ca2ae88c0e851acde'
                     }
                     'src_server_script-includes_UniversalAuthManager_js': {
                         table: 'sys_module'
@@ -80,6 +129,10 @@ declare global {
                     zoom_integration_list_module: {
                         table: 'sys_app_module'
                         id: '089692c390b64c6e8710ed77544ce91f'
+                    }
+                    'ZoomIntegrationForm.css': {
+                        table: 'sys_ux_theme_asset'
+                        id: '9f86d67c615b43449bb6395fa8ff0bd3'
                     }
                     ZoomIntegrationHelper: {
                         table: 'sys_script_include'
@@ -109,6 +162,7 @@ declare global {
                     {
                         table: 'sys_choice_set'
                         id: '0359a53bfaa040198b2946559370cf42'
+                        deleted: true
                         key: {
                             name: 'x_1842120_hubby_u_zoom_integration'
                             element: 'u_integration_type'
@@ -117,6 +171,7 @@ declare global {
                     {
                         table: 'sys_documentation'
                         id: '04dc0a0e80c74a4d9ea1075943af7af2'
+                        deleted: true
                         key: {
                             name: 'x_1842120_hubby_u_zoom_integration'
                             element: 'u_auth_token'
@@ -141,6 +196,7 @@ declare global {
                     {
                         table: 'sys_documentation'
                         id: '07daded9d3794ab98e586150b6bfe798'
+                        deleted: true
                         key: {
                             name: 'x_1842120_hubby_u_zoom_integration'
                             element: 'u_api_key'
@@ -250,6 +306,7 @@ declare global {
                     {
                         table: 'sys_dictionary'
                         id: '2f031dc3fca1493dbe8662efb991dfeb'
+                        deleted: true
                         key: {
                             name: 'x_1842120_hubby_u_zoom_integration'
                             element: 'u_integration_type'
@@ -258,6 +315,7 @@ declare global {
                     {
                         table: 'sys_documentation'
                         id: '33b7e0a5ef004e74bdfccd482616ebeb'
+                        deleted: true
                         key: {
                             name: 'x_1842120_hubby_u_zoom_integration'
                             element: 'u_phone_number'
@@ -339,6 +397,7 @@ declare global {
                     {
                         table: 'sys_dictionary'
                         id: '4471b09386c943c588518478da8b59ab'
+                        deleted: true
                         key: {
                             name: 'x_1842120_hubby_u_zoom_integration'
                             element: 'u_base_url'
@@ -347,6 +406,7 @@ declare global {
                     {
                         table: 'sys_choice'
                         id: '45b975e93c0d42d08573ebcf087533f2'
+                        deleted: true
                         key: {
                             name: 'x_1842120_hubby_u_zoom_integration'
                             element: 'u_integration_type'
@@ -406,6 +466,7 @@ declare global {
                     {
                         table: 'sys_dictionary'
                         id: '543ac45f77e94528a48c2a14b2fdfe53'
+                        deleted: true
                         key: {
                             name: 'x_1842120_hubby_u_zoom_integration'
                             element: 'u_phone_number'
@@ -423,6 +484,7 @@ declare global {
                     {
                         table: 'sys_documentation'
                         id: '5c5261a445c5464899c55b345c27e76b'
+                        deleted: true
                         key: {
                             name: 'x_1842120_hubby_u_zoom_integration'
                             element: 'u_account_sid'
@@ -439,6 +501,7 @@ declare global {
                     {
                         table: 'sys_choice'
                         id: '603efea1e6dd43e7972ebf076647683a'
+                        deleted: true
                         key: {
                             name: 'x_1842120_hubby_u_zoom_integration'
                             element: 'u_integration_type'
@@ -473,6 +536,7 @@ declare global {
                     {
                         table: 'sys_documentation'
                         id: '6f9805f757634e39a427ec4c31551656'
+                        deleted: true
                         key: {
                             name: 'x_1842120_hubby_u_zoom_integration'
                             element: 'u_base_url'
@@ -490,6 +554,7 @@ declare global {
                     {
                         table: 'sys_dictionary'
                         id: '72c34118d5f4441e9449c92ae6d88b2c'
+                        deleted: true
                         key: {
                             name: 'x_1842120_hubby_u_zoom_integration'
                             element: 'u_api_key'
@@ -515,6 +580,7 @@ declare global {
                     {
                         table: 'sys_dictionary'
                         id: '7ea8edcbd60c4f97af6619bad475cb52'
+                        deleted: true
                         key: {
                             name: 'x_1842120_hubby_u_zoom_integration'
                             element: 'u_project_key'
@@ -564,6 +630,7 @@ declare global {
                     {
                         table: 'sys_documentation'
                         id: '890c9bbbf8c343c2b74d146a4b189ae8'
+                        deleted: true
                         key: {
                             name: 'x_1842120_hubby_u_zoom_integration'
                             element: 'u_integration_type'
@@ -649,6 +716,7 @@ declare global {
                     {
                         table: 'sys_documentation'
                         id: 'a2bd42480ae34664828f94f773489492'
+                        deleted: true
                         key: {
                             name: 'x_1842120_hubby_u_zoom_integration'
                             element: 'u_project_key'
@@ -658,6 +726,7 @@ declare global {
                     {
                         table: 'sys_documentation'
                         id: 'a99a2bacc858409eade27e19fac32ed0'
+                        deleted: true
                         key: {
                             name: 'x_1842120_hubby_u_zoom_integration'
                             element: 'u_default_channel'
@@ -674,6 +743,7 @@ declare global {
                     {
                         table: 'sys_choice'
                         id: 'b55b3caebdfc4cc0b1aac5ec70141baf'
+                        deleted: true
                         key: {
                             name: 'x_1842120_hubby_u_zoom_integration'
                             element: 'u_integration_type'
@@ -690,6 +760,7 @@ declare global {
                     {
                         table: 'sys_dictionary'
                         id: 'bcc2fb4b5ee147eb9d0c35536fae37f1'
+                        deleted: true
                         key: {
                             name: 'x_1842120_hubby_u_zoom_integration'
                             element: 'u_default_channel'
@@ -740,6 +811,7 @@ declare global {
                     {
                         table: 'sys_dictionary'
                         id: 'ccd61790ebe64a76b952e8a4df80ad97'
+                        deleted: true
                         key: {
                             name: 'x_1842120_hubby_u_zoom_integration'
                             element: 'u_auth_token'
@@ -748,6 +820,7 @@ declare global {
                     {
                         table: 'sys_choice'
                         id: 'cebcd9a610e54afab55f48f348242ba4'
+                        deleted: true
                         key: {
                             name: 'x_1842120_hubby_u_zoom_integration'
                             element: 'u_integration_type'
@@ -782,6 +855,7 @@ declare global {
                     {
                         table: 'sys_dictionary'
                         id: 'e8f3145c1d044bf3955e5279524de45b'
+                        deleted: true
                         key: {
                             name: 'x_1842120_hubby_u_zoom_integration'
                             element: 'u_account_sid'
@@ -799,6 +873,7 @@ declare global {
                     {
                         table: 'sys_choice'
                         id: 'f6152cd922ab44308d4579c70eda2f3d'
+                        deleted: true
                         key: {
                             name: 'x_1842120_hubby_u_zoom_integration'
                             element: 'u_integration_type'
