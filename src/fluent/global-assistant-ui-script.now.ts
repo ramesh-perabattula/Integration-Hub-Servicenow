@@ -34,7 +34,7 @@ export const globalAssistantUiScript = Record({
 
         // Define Styles
         var style = document.createElement('style');
-        style.textContent = `
+        style.textContent = \`
             :host {
                 font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
                 box-sizing: border-box;
@@ -123,11 +123,11 @@ export const globalAssistantUiScript = Record({
             .ai-messages::-webkit-scrollbar { width: 6px; }
             .ai-messages::-webkit-scrollbar-track { background: transparent; }
             .ai-messages::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
-        `;
+        \`;
 
         // Define HTML Structure
         var container = document.createElement('div');
-        container.innerHTML = `
+        container.innerHTML = \`
             <button class="ai-fab">✨</button>
             <div class="ai-chat-window">
                 <div class="ai-header">
@@ -146,7 +146,7 @@ export const globalAssistantUiScript = Record({
                     </button>
                 </div>
             </div>
-        `;
+        \`;
 
         shadow.appendChild(style);
         shadow.appendChild(container);
