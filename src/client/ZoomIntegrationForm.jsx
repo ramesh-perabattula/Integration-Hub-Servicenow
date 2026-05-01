@@ -126,23 +126,34 @@ export default function ZoomIntegrationForm() {
       var recRest = typeof rec.u_rest_message_name === 'object' ? rec.u_rest_message_name.display_value : rec.u_rest_message_name;
       updateProgress(1, 'done', 'Record verified: ' + recName);
 
-      // Step 3: Verify REST message
-      updateProgress(2, 'active', 'Checking REST Message creation...');
-      return new Promise(function(resolve) { setTimeout(function() { resolve({ recName: recName, recRest: recRest, rec: rec }); }, 1200); });
+      // Step 3: Verify REST message with polling (business rule needs time)
+      updateProgress(2, 'active', 'Waiting for REST Message creation...');
+      return new Promise(function(resolve) { setTimeout(function() { resolve({ recName: recName, recRest: recRest, rec: rec }); }, 2000); });
     })
     .then(function(info) {
-      // Check if REST message was created by the business rule
-      return fetch('/api/now/table/sys_rest_message?sysparm_query=name=' + encodeURIComponent(info.recRest) + '&sysparm_limit=1', {
-        headers: { 'Accept': 'application/json', 'X-UserToken': window.g_ck }
-      }).then(function(r) { return r.json(); }).then(function(restData) {
-        var found = restData.result && restData.result.length > 0;
-        if (found) {
-          updateProgress(2, 'done', 'REST Message "' + info.recRest + '" found ✓');
-        } else {
-          updateProgress(2, 'warn', 'REST Message not found yet — business rule may still be processing');
-        }
-        return info;
-      });
+      // Poll for REST message up to 5 times, 2s apart
+      function checkRestMessage(attempt) {
+        return fetch('/api/now/table/sys_rest_message?sysparm_query=name=' + encodeURIComponent(info.recRest) + '&sysparm_limit=1', {
+          headers: { 'Accept': 'application/json', 'X-UserToken': window.g_ck }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(restData) {
+          var found = restData.result && restData.result.length > 0;
+          if (found) {
+            updateProgress(2, 'done', 'REST Message "' + info.recRest + '" verified ✓');
+            return info;
+          } else if (attempt < 5) {
+            updateProgress(2, 'active', 'Waiting for business rule... (attempt ' + (attempt + 1) + '/5)');
+            return new Promise(function(resolve) {
+              setTimeout(function() { resolve(checkRestMessage(attempt + 1)); }, 2000);
+            });
+          } else {
+            updateProgress(2, 'warn', 'REST Message not created yet — check System Logs for errors');
+            return info;
+          }
+        });
+      }
+      return checkRestMessage(1);
     })
     .then(function(info) {
       // Step 4: Done!
