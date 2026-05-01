@@ -53,7 +53,7 @@ IntegrationHelper.prototype = {
             // Execute with retry mechanism
             while (retryCount <= maxRetries) {
                 try {
-                    responseBody = this._executeRestCall(methodName, requestData, integrationType);
+                    responseBody = this._executeRestCall(methodName, requestData, integrationType, payload);
                     break; // Success - exit retry loop
                 } catch (e) {
                     retryCount++;
@@ -114,10 +114,11 @@ IntegrationHelper.prototype = {
         var requestData = {
             headers: {},
             body: null,
-            contentType: null
+            contentType: null,
+            stringParams: {}  // For REST message template variable substitution
         };
 
-        // Get authentication headers
+        // Get authentication headers (for non-OAuth integrations)
         var authHeaders = this.authManager.getHeaders(this.integrationRecord);
         for (var header in authHeaders) {
             requestData.headers[header] = authHeaders[header];
@@ -126,6 +127,7 @@ IntegrationHelper.prototype = {
         // Prepare type-specific request data
         switch (integrationType) {
             case 'zoom':
+                // OAuth 2.0 is handled at the REST message level — no manual auth header
                 if (action === 'create_meeting') {
                     requestData.contentType = 'application/json';
                     requestData.body = {
@@ -133,6 +135,20 @@ IntegrationHelper.prototype = {
                         "type": 2,
                         "duration": payload.duration || 60
                     };
+                    // Set template variables for REST message body template
+                    requestData.stringParams['topic'] = payload.topic;
+                    requestData.stringParams['duration'] = String(payload.duration || 60);
+                } else if (action === 'get_meeting' || action === 'delete_meeting') {
+                    requestData.stringParams['meetingId'] = String(payload.meetingId || '');
+                } else if (action === 'update_meeting') {
+                    requestData.stringParams['meetingId'] = String(payload.meetingId || '');
+                    requestData.contentType = 'application/json';
+                    requestData.body = {
+                        "topic": payload.topic,
+                        "duration": payload.duration || 60
+                    };
+                    requestData.stringParams['topic'] = payload.topic || '';
+                    requestData.stringParams['duration'] = String(payload.duration || 60);
                 }
                 break;
 
@@ -144,13 +160,17 @@ IntegrationHelper.prototype = {
                         "channel": channel,
                         "text": payload.text
                     };
+                    // Template variables
+                    requestData.stringParams['channel'] = channel;
+                    requestData.stringParams['text'] = payload.text;
+                    requestData.stringParams['token'] = this.integrationRecord.getValue('u_api_key') || '';
                 }
                 break;
 
             case 'jira':
                 if (action === 'create_issue') {
                     requestData.contentType = 'application/json';
-                    var projectKey = this.integrationRecord.getValue('u_project_key') || 'DEFAULT';
+                    var projectKey = this.integrationRecord.getValue('u_project_key') || payload.project || 'DEFAULT';
                     requestData.body = {
                         "fields": {
                             "project": {
@@ -163,6 +183,12 @@ IntegrationHelper.prototype = {
                             }
                         }
                     };
+                    // Template variables
+                    requestData.stringParams['project'] = projectKey;
+                    requestData.stringParams['summary'] = payload.summary;
+                    requestData.stringParams['description'] = payload.description;
+                } else if (action === 'get_issue') {
+                    requestData.stringParams['issueId'] = String(payload.issueId || '');
                 }
                 break;
 
@@ -170,30 +196,50 @@ IntegrationHelper.prototype = {
                 if (action === 'send_sms') {
                     requestData.contentType = 'application/x-www-form-urlencoded';
                     var fromNumber = this.integrationRecord.getValue('u_phone_number') || payload.from;
+                    var accountSid = this.integrationRecord.getValue('u_account_sid') || '';
                     requestData.body = 'From=' + encodeURIComponent(fromNumber) + 
                                      '&To=' + encodeURIComponent(payload.to) + 
                                      '&Body=' + encodeURIComponent(payload.message);
+                    // Template variables for endpoint and body
+                    requestData.stringParams['AccountSID'] = accountSid;
+                    requestData.stringParams['from'] = fromNumber;
+                    requestData.stringParams['to'] = payload.to;
+                    requestData.stringParams['message'] = payload.message;
                 }
                 break;
 
             case 'postman':
-                // No special body preparation needed for GET requests
+                if (action === 'list_collections') {
+                    requestData.stringParams['apiKey'] = this.integrationRecord.getValue('u_api_key') || '';
+                }
                 break;
         }
 
         return requestData;
     },
 
-    _executeRestCall: function(methodName, requestData, integrationType) {
+    _executeRestCall: function(methodName, requestData, integrationType, payload) {
         // Create REST message
         var restMessage = new sn_ws.RESTMessageV2(this.restMessageName, methodName);
         
         // Set timeout to 30 seconds
         restMessage.setHttpTimeout(30000);
         
+        // Set template variables using setStringParameterNoEscape
+        // This resolves ${variable} placeholders in the REST message body and endpoint templates
+        if (requestData.stringParams) {
+            for (var paramName in requestData.stringParams) {
+                if (requestData.stringParams.hasOwnProperty(paramName)) {
+                    restMessage.setStringParameterNoEscape(paramName, requestData.stringParams[paramName]);
+                }
+            }
+        }
+        
         // Set headers
         for (var headerName in requestData.headers) {
-            restMessage.setRequestHeader(headerName, requestData.headers[headerName]);
+            if (requestData.headers.hasOwnProperty(headerName)) {
+                restMessage.setRequestHeader(headerName, requestData.headers[headerName]);
+            }
         }
         
         // Set content type if specified
@@ -219,7 +265,7 @@ IntegrationHelper.prototype = {
             throw new Error('HTTP ' + statusCode + ': ' + responseBody);
         }
 
-        gs.info('Integration executed successfully: ' + this.integrationName + ' - ' + methodName);
+        gs.info('Integration executed successfully: ' + this.integrationName + ' - ' + methodName + ' (HTTP ' + statusCode + ')');
         return responseBody;
     },
 
@@ -286,7 +332,7 @@ IntegrationHelper.prototype = {
     _sanitizeForLogging: function(data) {
         if (!data) return data;
         
-        var sensitiveFields = ['password', 'token', 'secret', 'key', 'authorization', 'auth'];
+        var sensitiveFields = ['password', 'token', 'secret', 'key', 'authorization', 'auth', 'client_secret', 'auth_token'];
         var dataString = JSON.stringify(data);
         
         // Simple masking - replace sensitive values

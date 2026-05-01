@@ -88,6 +88,10 @@ export const x_1842120_hubby_u_zoom_integration = Table({
             label: 'Phone Number',
             maxLength: 50
         }),
+        u_email: StringColumn({ 
+            label: 'Email',
+            maxLength: 255
+        }),
     },
     auto_number: {
         prefix: 'ZI',
