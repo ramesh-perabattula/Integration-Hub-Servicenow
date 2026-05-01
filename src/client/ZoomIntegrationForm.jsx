@@ -1,654 +1,401 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import './ZoomIntegrationForm.css';
 
 export default function ZoomIntegrationForm() {
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     friendlyName: '',
-    integrationType: 'zoom',
-    // Zoom fields
     clientId: '',
     clientSecret: '',
-    methods: [],
-    // Universal fields  
-    apiKey: '',
-    baseUrl: '',
-    projectKey: '',
-    defaultChannel: '',
-    accountSid: '',
-    authToken: '',
-    phoneNumber: ''
+    methods: ['POST', 'GET', 'PATCH', 'DELETE']
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [expandedSection, setExpandedSection] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [copiedBtn, setCopiedBtn] = useState(null);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+  const handleInputChange = useCallback(function(e) {
+    var name = e.target.name;
+    var value = e.target.value;
+    setFormData(function(prev) {
+      var next = Object.assign({}, prev);
+      next[name] = value;
+      return next;
+    });
+  }, []);
 
-  const handleMethodChange = (method) => {
-    setFormData(prev => ({
-      ...prev,
-      methods: prev.methods.includes(method)
-        ? prev.methods.filter(m => m !== method)
-        : [...prev.methods, method]
-    }));
-  };
+  var handleMethodChange = useCallback(function(method) {
+    setFormData(function(prev) {
+      var next = Object.assign({}, prev);
+      if (prev.methods.indexOf(method) > -1) {
+        next.methods = prev.methods.filter(function(m) { return m !== method; });
+      } else {
+        next.methods = prev.methods.concat([method]);
+      }
+      return next;
+    });
+  }, []);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  var showToast = useCallback(function(msg) {
+    setToast(msg);
+    setTimeout(function() { setToast(null); }, 2500);
+  }, []);
+
+  var copyToClipboard = useCallback(function(text, btnId) {
+    navigator.clipboard.writeText(text).then(function() {
+      setCopiedBtn(btnId);
+      showToast('Copied to clipboard!');
+      setTimeout(function() { setCopiedBtn(null); }, 2000);
+    }).catch(function() {});
+  }, [showToast]);
+
+  var handleSubmit = function() {
     setIsSubmitting(true);
     setError(null);
 
-    try {
-      // Prepare data based on integration type
-      const requestData = {
-        u_name: formData.friendlyName,
-        u_integration_type: formData.integrationType,
-        u_status: 'active'
-      };
+    var requestData = {
+      u_name: formData.friendlyName,
+      u_client_id: formData.clientId,
+      u_client_secret: formData.clientSecret,
+      u_methods: formData.methods.join(','),
+      u_status: 'active'
+    };
 
-      // Add type-specific fields
-      switch (formData.integrationType) {
-        case 'zoom':
-          requestData.u_client_id = formData.clientId;
-          requestData.u_client_secret = formData.clientSecret;
-          requestData.u_methods = formData.methods.join(',');
-          break;
-        case 'slack':
-          requestData.u_api_key = formData.apiKey;
-          requestData.u_default_channel = formData.defaultChannel;
-          break;
-        case 'jira':
-          requestData.u_api_key = formData.apiKey;
-          requestData.u_base_url = formData.baseUrl;
-          requestData.u_project_key = formData.projectKey;
-          break;
-        case 'twilio':
-          requestData.u_account_sid = formData.accountSid;
-          requestData.u_auth_token = formData.authToken;
-          requestData.u_phone_number = formData.phoneNumber;
-          break;
-        case 'postman':
-          requestData.u_api_key = formData.apiKey;
-          requestData.u_base_url = formData.baseUrl;
-          break;
-      }
-
-      const response = await fetch('/api/now/table/x_1842120_hubby_u_zoom_integration', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-UserToken': window.g_ck
-        },
-        body: JSON.stringify(requestData)
-      });
-
+    fetch('/api/now/table/x_1842120_hubby_u_zoom_integration', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-UserToken': window.g_ck
+      },
+      body: JSON.stringify(requestData)
+    })
+    .then(function(response) {
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || `HTTP ${response.status}: Failed to create integration`);
+        return response.json().then(function(errData) {
+          throw new Error((errData.error && errData.error.message) || 'HTTP ' + response.status + ': Failed to create integration');
+        });
       }
-
-      const responseData = await response.json();
-      const createdRecord = responseData.result;
-      
+      return response.json();
+    })
+    .then(function(responseData) {
+      var rec = responseData.result;
       setResult({
-        sys_id: typeof createdRecord.sys_id === 'object' ? createdRecord.sys_id.value : createdRecord.sys_id,
-        name: typeof createdRecord.u_name === 'object' ? createdRecord.u_name.display_value : createdRecord.u_name,
-        integrationType: typeof createdRecord.u_integration_type === 'object' ? 
-          createdRecord.u_integration_type.display_value : 
-          createdRecord.u_integration_type,
-        restMessageName: typeof createdRecord.u_rest_message_name === 'object' ? 
-          createdRecord.u_rest_message_name.display_value : 
-          createdRecord.u_rest_message_name
+        sys_id: typeof rec.sys_id === 'object' ? rec.sys_id.value : rec.sys_id,
+        name: typeof rec.u_name === 'object' ? rec.u_name.display_value : rec.u_name,
+        restMessageName: typeof rec.u_rest_message_name === 'object' ? rec.u_rest_message_name.display_value : rec.u_rest_message_name,
+        methods: typeof rec.u_methods === 'object' ? rec.u_methods.display_value : rec.u_methods
       });
-
-      // Reset form
-      setFormData({
-        friendlyName: '',
-        integrationType: 'zoom',
-        clientId: '',
-        clientSecret: '',
-        methods: [],
-        apiKey: '',
-        baseUrl: '',
-        projectKey: '',
-        defaultChannel: '',
-        accountSid: '',
-        authToken: '',
-        phoneNumber: ''
-      });
-
-    } catch (err) {
-      console.error('Error creating integration:', err);
-      setError(err.message || 'An unexpected error occurred while creating the integration');
-    } finally {
+    })
+    .catch(function(err) {
+      setError(err.message || 'An unexpected error occurred');
+      setStep(2);
+    })
+    .finally(function() {
       setIsSubmitting(false);
+    });
+  };
+
+  var nextStep = function() {
+    if (step === 1 && !formData.friendlyName.trim()) {
+      setError('Please enter an integration name');
+      return;
     }
+    setError(null);
+    setStep(step + 1);
   };
 
-  const getExampleAction = () => {
-    switch (result?.integrationType || formData.integrationType) {
-      case 'zoom': return 'create_meeting';
-      case 'slack': return 'send_message';
-      case 'jira': return 'create_issue';
-      case 'twilio': return 'send_sms';
-      case 'postman': return 'list_collections';
-      default: return 'action';
-    }
+  var prevStep = function() {
+    setError(null);
+    setStep(step - 1);
   };
 
-  const getExamplePayload = () => {
-    switch (result?.integrationType || formData.integrationType) {
-      case 'zoom': return '{\n  topic: \'Demo Meeting\',\n  duration: 30\n}';
-      case 'slack': return '{\n  text: \'Hello from ServiceNow\'\n}';
-      case 'jira': return '{\n  summary: \'Test Issue\',\n  description: \'Created via ServiceNow\'\n}';
-      case 'twilio': return '{\n  to: \'+91XXXXXXXXXX\',\n  message: \'Hello from ServiceNow\'\n}';
-      case 'postman': return '{}';
-      default: return '{}';
-    }
-  };
-
-  const getUseCase = (type) => {
-    const useCases = {
-      zoom: 'Use in Incident UI Action to create bridge call',
-      slack: 'Send alert when Incident is created',
-      jira: 'Auto-create issue from Problem record',
-      twilio: 'Send SMS for P1 incidents',
-      postman: 'Fetch API collections for automation'
-    };
-    return useCases[type] || 'General API integration';
-  };
-
-  const copyToClipboard = async (text) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      // Could add a toast notification here
-    } catch (err) {
-      console.error('Failed to copy code:', err);
-    }
-  };
-
-  const toggleSection = (section) => {
-    setExpandedSection(expandedSection === section ? null : section);
-  };
-
-  const getIntegrationIcon = (type) => {
-    const icons = {
-      zoom: '📹',
-      slack: '💬', 
-      jira: '📋',
-      twilio: '📱',
-      postman: '🚀'
-    };
-    return icons[type] || '🔗';
-  };
-
+  // ── SUCCESS VIEW ──
   if (result) {
-    const integrationName = result.name;
-    const integrationType = result.integrationType;
-    const action = getExampleAction();
-    const payload = getExamplePayload();
+    var integrationName = result.name;
+    var action = 'create_meeting';
+    var payload = "{\n  topic: 'Demo Meeting',\n  duration: 30\n}";
 
-    const scopedCode = `var api = new IntegrationHelper('${integrationName}');
-var res = api.execute('${action}', ${payload});`;
-
-    const globalCode = `var api = new GlobalIntegrationHelper('${integrationName}');
-var res = api.execute('${action}', ${payload});`;
-
-    const uiActionCode = `// UI Action Script
-var api = new GlobalIntegrationHelper('${integrationName}');
-var res = api.execute('${action}', ${payload});
-gs.addInfoMessage('Integration executed: ' + res);`;
-
-    const businessRuleCode = `// Business Rule Script
-(function executeRule(current, previous) {
-    var api = new GlobalIntegrationHelper('${integrationName}');
-    var res = api.execute('${action}', ${payload});
-    gs.info('Integration result: ' + res);
-})(current, previous);`;
+    var scopedCode = "var api = new IntegrationHelper('" + integrationName + "');\nvar res = api.execute('" + action + "', " + payload + ");\ngs.info(res);";
+    var globalCode = "var api = new GlobalIntegrationHelper('" + integrationName + "');\nvar res = api.execute('" + action + "', " + payload + ");";
+    var uiActionCode = "// UI Action Script — Attach to Incident form\nvar api = new GlobalIntegrationHelper('" + integrationName + "');\nvar res = api.execute('create_meeting', {\n  topic: current.short_description + ' Bridge',\n  duration: 60\n});\ngs.addInfoMessage('Zoom: ' + res);";
+    var brCode = "(function executeRule(current, previous) {\n    var api = new GlobalIntegrationHelper('" + integrationName + "');\n    var res = api.execute('create_meeting', {\n        topic: 'P1 Bridge: ' + current.number,\n        duration: 60\n    });\n    gs.info('Zoom bridge created: ' + res);\n})(current, previous);";
 
     return (
       <div className="integration-hub-container">
+        {toast && <div className="toast">{toast}</div>}
         <div className="success-card">
           <div className="success-header">
-            <span className="success-icon">✅</span>
-            <h2>Integration Created Successfully!</h2>
+            <div className="success-icon-wrap">
+              <span className="success-icon">✓</span>
+            </div>
+            <h2>Integration Created!</h2>
+            <p>Your Zoom integration is ready to use</p>
           </div>
-          
+
           <div className="integration-details">
             <div className="detail-item">
-              <span className="detail-label">Integration Name:</span>
+              <span className="detail-label">Name</span>
               <span className="detail-value">{integrationName}</span>
             </div>
-            
             <div className="detail-item">
-              <span className="detail-label">Type:</span>
-              <span className="detail-value">
-                {getIntegrationIcon(integrationType)} {integrationType}
-              </span>
+              <span className="detail-label">REST Message</span>
+              <span className="detail-value">{result.restMessageName || 'ZOOM_' + integrationName}</span>
             </div>
-            
             <div className="detail-item">
-              <span className="detail-label">REST Message:</span>
-              <span className="detail-value">{result.restMessageName || `${integrationType.toUpperCase()}_${integrationName}`}</span>
+              <span className="detail-label">Methods</span>
+              <span className="detail-value">{result.methods || 'POST,GET,PATCH,DELETE'}</span>
+            </div>
+            <div className="detail-item">
+              <span className="detail-label">Auth</span>
+              <span className="detail-value">OAuth 2.0</span>
             </div>
           </div>
 
-          {/* How to Use This Integration Section */}
           <div className="usage-section">
-            <h3 className="section-title">ℹ️ How to Use This Integration</h3>
-            
-            {/* Option 1: Direct Script Include */}
+            <h3 className="section-title">Quick Start</h3>
+
             <div className="usage-option">
-              <h4 className="option-title">Option 1: Scoped Usage</h4>
+              <h4 className="option-title">Scoped Script Include</h4>
               <div className="code-block-container">
-                <pre className="code-block">
-                  <code>{scopedCode}</code>
-                </pre>
-                <button onClick={() => copyToClipboard(scopedCode)} className="copy-btn">
-                  📋 Copy
+                <pre className="code-block"><code>{scopedCode}</code></pre>
+                <button onClick={function() { copyToClipboard(scopedCode, 'scoped'); }} className={'copy-btn' + (copiedBtn === 'scoped' ? ' copied' : '')}>
+                  {copiedBtn === 'scoped' ? '✓ Copied' : 'Copy'}
                 </button>
               </div>
             </div>
 
-            {/* Option 2: Global Usage */}
             <div className="usage-option">
-              <h4 className="option-title">Option 2: Global Usage</h4>
+              <h4 className="option-title">Global Usage</h4>
               <div className="code-block-container">
-                <pre className="code-block">
-                  <code>{globalCode}</code>
-                </pre>
-                <button onClick={() => copyToClipboard(globalCode)} className="copy-btn">
-                  📋 Copy
+                <pre className="code-block"><code>{globalCode}</code></pre>
+                <button onClick={function() { copyToClipboard(globalCode, 'global'); }} className={'copy-btn' + (copiedBtn === 'global' ? ' copied' : '')}>
+                  {copiedBtn === 'global' ? '✓ Copied' : 'Copy'}
                 </button>
               </div>
             </div>
 
-            {/* Option 3: Use Cases */}
             <div className="usage-option">
-              <h4 className="option-title">Option 3: Example Use Case</h4>
+              <h4 className="option-title">Use Case</h4>
               <div className="use-case-box">
                 <span className="use-case-icon">💡</span>
-                <span className="use-case-text">{getUseCase(integrationType)}</span>
+                <span className="use-case-text">Attach to Incident UI Action to create a Zoom bridge call for P1 incidents</span>
               </div>
             </div>
           </div>
 
-          {/* Developer Guide Section */}
           <div className="developer-guide">
-            <div 
-              className="guide-header"
-              onClick={() => toggleSection('guide')}
-            >
-              <h3 className="section-title">📘 Developer Guide</h3>
-              <span className="expand-icon">{expandedSection === 'guide' ? '▼' : '▶'}</span>
+            <div className="guide-header" onClick={function() { setExpandedSection(expandedSection === 'guide' ? null : 'guide'); }}>
+              <h3 className="section-title" style={{marginBottom: 0}}>Developer Guide</h3>
+              <span className="expand-icon">{expandedSection === 'guide' ? '▾' : '▸'}</span>
             </div>
-            
+
             {expandedSection === 'guide' && (
               <div className="guide-content">
-                {/* UI Action Usage */}
                 <div className="guide-item">
-                  <h4 className="guide-item-title">⚙️ UI Action Usage</h4>
+                  <h4 className="guide-item-title">UI Action Script</h4>
                   <div className="code-block-container">
-                    <pre className="code-block">
-                      <code>{uiActionCode}</code>
-                    </pre>
-                    <button onClick={() => copyToClipboard(uiActionCode)} className="copy-btn">
-                      📋 Copy
+                    <pre className="code-block"><code>{uiActionCode}</code></pre>
+                    <button onClick={function() { copyToClipboard(uiActionCode, 'ui'); }} className={'copy-btn' + (copiedBtn === 'ui' ? ' copied' : '')}>
+                      {copiedBtn === 'ui' ? '✓ Copied' : 'Copy'}
                     </button>
                   </div>
                 </div>
 
-                {/* Business Rule Usage */}
                 <div className="guide-item">
-                  <h4 className="guide-item-title">🔄 Business Rule Usage</h4>
+                  <h4 className="guide-item-title">Business Rule Script</h4>
                   <div className="code-block-container">
-                    <pre className="code-block">
-                      <code>{businessRuleCode}</code>
-                    </pre>
-                    <button onClick={() => copyToClipboard(businessRuleCode)} className="copy-btn">
-                      📋 Copy
+                    <pre className="code-block"><code>{brCode}</code></pre>
+                    <button onClick={function() { copyToClipboard(brCode, 'br'); }} className={'copy-btn' + (copiedBtn === 'br' ? ' copied' : '')}>
+                      {copiedBtn === 'br' ? '✓ Copied' : 'Copy'}
                     </button>
                   </div>
                 </div>
 
-                {/* Flow Designer Note */}
                 <div className="guide-item">
-                  <h4 className="guide-item-title">🌊 Flow Designer Usage</h4>
+                  <h4 className="guide-item-title">Flow Designer</h4>
                   <div className="flow-note">
-                    <span className="flow-icon">💡</span>
+                    <span className="flow-icon">⚡</span>
                     <div className="flow-text">
-                      <strong>Use Script step and call GlobalIntegrationHelper</strong>
-                      <br />
-                      <small>Add a Script step in your flow and use the Global Usage code above</small>
+                      <strong>Use a Script step in Flow Designer</strong>
+                      Add a Script step and paste the Global Usage code above
                     </div>
                   </div>
                 </div>
               </div>
             )}
           </div>
-          
-          <button 
-            onClick={() => setResult(null)}
-            className="create-another-btn"
-          >
-            Create Another Integration
+
+          <button onClick={function() { setResult(null); setStep(1); setFormData({ friendlyName: '', clientId: '', clientSecret: '', methods: ['POST','GET','PATCH','DELETE'] }); }} className="create-another-btn">
+            + Create Another Integration
           </button>
         </div>
       </div>
     );
   }
 
-  const renderTypeSpecificFields = () => {
-    switch (formData.integrationType) {
-      case 'zoom':
-        return (
-          <div className="fields-section">
-            <div className="field-group">
-              <label htmlFor="clientId" className="field-label">Client ID</label>
-              <input
-                type="text"
-                id="clientId"
-                name="clientId"
-                value={formData.clientId}
-                onChange={handleInputChange}
-                disabled={isSubmitting}
-                className="field-input"
-              />
-            </div>
-
-            <div className="field-group">
-              <label htmlFor="clientSecret" className="field-label">Client Secret</label>
-              <input
-                type="password"
-                id="clientSecret"
-                name="clientSecret"
-                value={formData.clientSecret}
-                onChange={handleInputChange}
-                disabled={isSubmitting}
-                className="field-input"
-              />
-            </div>
-
-            <div className="field-group">
-              <label className="field-label">Methods</label>
-              <div className="checkbox-grid">
-                {['POST', 'GET', 'PATCH', 'DELETE'].map(method => (
-                  <label key={method} className="checkbox-item">
-                    <input
-                      type="checkbox"
-                      checked={formData.methods.includes(method)}
-                      onChange={() => handleMethodChange(method)}
-                      disabled={isSubmitting}
-                      className="checkbox-input"
-                    />
-                    <span className="checkbox-label">{method}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
-
-      case 'slack':
-        return (
-          <div className="fields-section">
-            <div className="field-group">
-              <label htmlFor="apiKey" className="field-label">
-                API Key (Bot Token) <span className="required">*</span>
-              </label>
-              <input
-                type="password"
-                id="apiKey"
-                name="apiKey"
-                value={formData.apiKey}
-                onChange={handleInputChange}
-                disabled={isSubmitting}
-                required
-                className="field-input"
-                placeholder="xoxb-..."
-              />
-            </div>
-
-            <div className="field-group">
-              <label htmlFor="defaultChannel" className="field-label">Default Channel</label>
-              <input
-                type="text"
-                id="defaultChannel"
-                name="defaultChannel"
-                value={formData.defaultChannel}
-                onChange={handleInputChange}
-                disabled={isSubmitting}
-                className="field-input"
-                placeholder="#general"
-              />
-            </div>
-          </div>
-        );
-
-      case 'jira':
-        return (
-          <div className="fields-section">
-            <div className="field-group">
-              <label htmlFor="apiKey" className="field-label">
-                API Key <span className="required">*</span>
-              </label>
-              <input
-                type="password"
-                id="apiKey"
-                name="apiKey"
-                value={formData.apiKey}
-                onChange={handleInputChange}
-                disabled={isSubmitting}
-                required
-                className="field-input"
-              />
-            </div>
-
-            <div className="field-group">
-              <label htmlFor="baseUrl" className="field-label">
-                Base URL <span className="required">*</span>
-              </label>
-              <input
-                type="text"
-                id="baseUrl"
-                name="baseUrl"
-                value={formData.baseUrl}
-                onChange={handleInputChange}
-                disabled={isSubmitting}
-                placeholder="https://your-domain.atlassian.net"
-                required
-                className="field-input"
-              />
-            </div>
-
-            <div className="field-group">
-              <label htmlFor="projectKey" className="field-label">Project Key</label>
-              <input
-                type="text"
-                id="projectKey"
-                name="projectKey"
-                value={formData.projectKey}
-                onChange={handleInputChange}
-                disabled={isSubmitting}
-                placeholder="PROJ"
-                className="field-input"
-              />
-            </div>
-          </div>
-        );
-
-      case 'twilio':
-        return (
-          <div className="fields-section">
-            <div className="field-group">
-              <label htmlFor="accountSid" className="field-label">
-                Account SID <span className="required">*</span>
-              </label>
-              <input
-                type="text"
-                id="accountSid"
-                name="accountSid"
-                value={formData.accountSid}
-                onChange={handleInputChange}
-                disabled={isSubmitting}
-                required
-                className="field-input"
-              />
-            </div>
-
-            <div className="field-group">
-              <label htmlFor="authToken" className="field-label">
-                Auth Token <span className="required">*</span>
-              </label>
-              <input
-                type="password"
-                id="authToken"
-                name="authToken"
-                value={formData.authToken}
-                onChange={handleInputChange}
-                disabled={isSubmitting}
-                required
-                className="field-input"
-              />
-            </div>
-
-            <div className="field-group">
-              <label htmlFor="phoneNumber" className="field-label">Phone Number</label>
-              <input
-                type="text"
-                id="phoneNumber"
-                name="phoneNumber"
-                value={formData.phoneNumber}
-                onChange={handleInputChange}
-                disabled={isSubmitting}
-                placeholder="+1234567890"
-                className="field-input"
-              />
-            </div>
-          </div>
-        );
-
-      case 'postman':
-        return (
-          <div className="fields-section">
-            <div className="field-group">
-              <label htmlFor="apiKey" className="field-label">
-                API Key <span className="required">*</span>
-              </label>
-              <input
-                type="password"
-                id="apiKey"
-                name="apiKey"
-                value={formData.apiKey}
-                onChange={handleInputChange}
-                disabled={isSubmitting}
-                required
-                className="field-input"
-              />
-            </div>
-
-            <div className="field-group">
-              <label htmlFor="baseUrl" className="field-label">Base URL (optional)</label>
-              <input
-                type="text"
-                id="baseUrl"
-                name="baseUrl"
-                value={formData.baseUrl}
-                onChange={handleInputChange}
-                disabled={isSubmitting}
-                placeholder="https://api.getpostman.com"
-                className="field-input"
-              />
-            </div>
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  };
-
+  // ── FORM VIEW ──
   return (
     <div className="integration-hub-container">
+      {toast && <div className="toast">{toast}</div>}
       <div className="main-card">
         <div className="header-section">
-          <h1 className="main-title">🌐 Universal Integration Hub</h1>
-          <p className="subtitle">Connect ServiceNow with external platforms seamlessly</p>
+          <h1 className="main-title">
+            <span className="icon">📹</span>Zoom Integration Hub
+          </h1>
+          <p className="subtitle">Create a Zoom meeting integration with OAuth 2.0 in seconds</p>
+
+          <div className="step-indicator">
+            <div className={'step-dot' + (step === 1 ? ' active' : '') + (step > 1 ? ' completed' : '')}>
+              {step > 1 ? '✓' : '1'}
+            </div>
+            <div className={'step-line' + (step > 1 ? ' active' : '')}></div>
+            <div className={'step-dot' + (step === 2 ? ' active' : '') + (step > 2 ? ' completed' : '')}>
+              {step > 2 ? '✓' : '2'}
+            </div>
+            <div className={'step-line' + (step > 2 ? ' active' : '')}></div>
+            <div className={'step-dot' + (step === 3 ? ' active' : '')}>3</div>
+          </div>
+          <div className="step-labels">
+            <span className={'step-label' + (step === 1 ? ' active' : '')}>Name</span>
+            <span className={'step-label' + (step === 2 ? ' active' : '')}>Configure</span>
+            <span className={'step-label' + (step === 3 ? ' active' : '')}>Review</span>
+          </div>
         </div>
-        
+
         {error && (
           <div className="error-alert">
-            <span className="error-icon">❌</span>
-            <div className="error-content">
-              <strong>Error:</strong> {error}
-            </div>
+            <span className="error-icon">⚠</span>
+            <div className="error-content">{error}</div>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="integration-form">
-          <div className="field-group">
-            <label htmlFor="friendlyName" className="field-label">
-              Integration Name <span className="required">*</span>
-            </label>
-            <input
-              type="text"
-              id="friendlyName"
-              name="friendlyName"
-              value={formData.friendlyName}
-              onChange={handleInputChange}
-              required
-              disabled={isSubmitting}
-              className="field-input"
-              placeholder="Enter a friendly name for this integration"
-            />
+        {/* STEP 1: Name */}
+        {step === 1 && (
+          <div className="integration-form">
+            <div className="fields-section">
+              <div className="field-group">
+                <label htmlFor="friendlyName" className="field-label">
+                  Integration Name <span className="required">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="friendlyName"
+                  name="friendlyName"
+                  value={formData.friendlyName}
+                  onChange={handleInputChange}
+                  className="field-input"
+                  placeholder="e.g. P1-Bridge, Team-Standup"
+                  autoFocus
+                />
+              </div>
+            </div>
+            <button type="button" onClick={nextStep} className="submit-btn" disabled={!formData.friendlyName.trim()}>
+              Continue →
+            </button>
           </div>
+        )}
 
-          <div className="field-group">
-            <label htmlFor="integrationType" className="field-label">
-              Integration Type <span className="required">*</span>
-            </label>
-            <select
-              id="integrationType"
-              name="integrationType"
-              value={formData.integrationType}
-              onChange={handleInputChange}
-              required
-              disabled={isSubmitting}
-              className="field-select"
-            >
-              <option value="zoom">{getIntegrationIcon('zoom')} Zoom</option>
-              <option value="slack">{getIntegrationIcon('slack')} Slack</option>
-              <option value="jira">{getIntegrationIcon('jira')} Jira</option>
-              <option value="twilio">{getIntegrationIcon('twilio')} Twilio</option>
-              <option value="postman">{getIntegrationIcon('postman')} Postman</option>
-            </select>
+        {/* STEP 2: Configure */}
+        {step === 2 && (
+          <div className="integration-form">
+            <div className="fields-section">
+              <div className="field-group">
+                <label htmlFor="clientId" className="field-label">
+                  Zoom Client ID <span className="required">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="clientId"
+                  name="clientId"
+                  value={formData.clientId}
+                  onChange={handleInputChange}
+                  className="field-input"
+                  placeholder="From Zoom Marketplace app"
+                />
+              </div>
+
+              <div className="field-group">
+                <label htmlFor="clientSecret" className="field-label">
+                  Zoom Client Secret <span className="required">*</span>
+                </label>
+                <input
+                  type="password"
+                  id="clientSecret"
+                  name="clientSecret"
+                  value={formData.clientSecret}
+                  onChange={handleInputChange}
+                  className="field-input"
+                  placeholder="••••••••••••"
+                />
+              </div>
+
+              <div className="field-group">
+                <label className="field-label">HTTP Methods</label>
+                <div className="checkbox-grid">
+                  {['POST', 'GET', 'PATCH', 'DELETE'].map(function(method) {
+                    var isChecked = formData.methods.indexOf(method) > -1;
+                    return (
+                      <label key={method} className={'checkbox-item' + (isChecked ? ' checked' : '')} onClick={function() { handleMethodChange(method); }}>
+                        <input type="checkbox" className="checkbox-input" checked={isChecked} readOnly />
+                        <span className="checkbox-visual"></span>
+                        <span className="checkbox-label">{method}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <button type="button" onClick={nextStep} className="submit-btn">
+              Review →
+            </button>
+            <button type="button" onClick={prevStep} className="btn-secondary">
+              ← Back
+            </button>
           </div>
+        )}
 
-          {renderTypeSpecificFields()}
+        {/* STEP 3: Review & Create */}
+        {step === 3 && (
+          <div className="review-section">
+            <div className="review-card" style={{marginTop: '24px'}}>
+              <div className="review-item">
+                <span className="review-label">Name</span>
+                <span className="review-value">{formData.friendlyName}</span>
+              </div>
+              <div className="review-item">
+                <span className="review-label">REST Message</span>
+                <span className="review-value accent">ZOOM_{formData.friendlyName}</span>
+              </div>
+              <div className="review-item">
+                <span className="review-label">Client ID</span>
+                <span className="review-value">{formData.clientId ? formData.clientId.substring(0, 8) + '••••' : '—'}</span>
+              </div>
+              <div className="review-item">
+                <span className="review-label">Methods</span>
+                <span className="review-value">{formData.methods.join(', ') || 'All (default)'}</span>
+              </div>
+              <div className="review-item">
+                <span className="review-label">Authentication</span>
+                <span className="review-value accent">OAuth 2.0 (Client Credentials)</span>
+              </div>
+            </div>
 
-          <button 
-            type="submit" 
-            className={`submit-btn ${isSubmitting ? 'submitting' : ''}`}
-            disabled={isSubmitting || !formData.friendlyName}
-          >
-            {isSubmitting ? (
-              <>
-                <span className="spinner"></span>
-                Creating Integration...
-              </>
-            ) : (
-              'Create Integration'
-            )}
-          </button>
-        </form>
+            <button type="button" onClick={handleSubmit} className="submit-btn" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <><span className="spinner"></span>Creating Integration...</>
+              ) : (
+                '🚀 Create Integration'
+              )}
+            </button>
+            <button type="button" onClick={prevStep} className="btn-secondary" disabled={isSubmitting}>
+              ← Back
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

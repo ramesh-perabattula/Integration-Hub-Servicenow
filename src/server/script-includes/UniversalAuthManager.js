@@ -5,106 +5,39 @@ UniversalAuthManager.prototype = {
     },
 
     /**
-     * Returns authentication headers for the given integration record.
-     * For Zoom, OAuth is handled at the REST message level — no headers needed here.
-     * For Slack, Jira, Twilio, Postman — headers are set dynamically.
+     * Returns authentication headers for a Zoom integration.
+     * For Zoom, OAuth 2.0 is handled at the REST message level —
+     * no manual Authorization header is needed at runtime.
+     *
+     * @param {GlideRecord} record - The integration record
+     * @returns {object} Empty headers object (OAuth handles auth)
      */
     getHeaders: function(record) {
-        try {
-            if (!record) {
-                return {};
-            }
-
-            var integrationType = record.getValue('u_integration_type') || 'zoom';
-            var headers = {};
-
-            switch (integrationType) {
-                case 'zoom':
-                    // OAuth 2.0 is attached at the REST message level
-                    // No manual Authorization header needed
-                    headers = {};
-                    break;
-
-                case 'slack':
-                    var slackToken = record.getValue('u_api_key');
-                    if (slackToken) {
-                        headers['Authorization'] = 'Bearer ' + slackToken;
-                    }
-                    break;
-
-                case 'jira':
-                    var jiraApiKey = record.getValue('u_api_key');
-                    var jiraEmail = record.getValue('u_email');
-                    if (jiraApiKey) {
-                        // Use u_email field if available, otherwise try parsing email:token format
-                        var credentials;
-                        if (jiraEmail) {
-                            credentials = jiraEmail + ':' + jiraApiKey;
-                        } else if (jiraApiKey.indexOf(':') > -1) {
-                            // Backward compatibility: u_api_key may contain email:token
-                            credentials = jiraApiKey;
-                        } else {
-                            credentials = 'user@example.com:' + jiraApiKey;
-                        }
-                        headers['Authorization'] = 'Basic ' + GlideStringUtil.base64Encode(credentials);
-                    }
-                    break;
-
-                case 'twilio':
-                    var accountSid = record.getValue('u_account_sid');
-                    var authToken = record.getValue('u_auth_token');
-                    if (accountSid && authToken) {
-                        var twilioCredentials = accountSid + ':' + authToken;
-                        headers['Authorization'] = 'Basic ' + GlideStringUtil.base64Encode(twilioCredentials);
-                    }
-                    break;
-
-                case 'postman':
-                    var postmanApiKey = record.getValue('u_api_key');
-                    if (postmanApiKey) {
-                        headers['X-Api-Key'] = postmanApiKey;
-                    }
-                    break;
-
-                default:
-                    gs.warn('Unknown integration type: ' + integrationType);
-                    headers = {};
-            }
-
-            return headers;
-
-        } catch (error) {
-            gs.error('UniversalAuthManager.getHeaders - Error: ' + error.getMessage());
-            return {};
-        }
+        // Zoom uses OAuth 2.0 attached to the REST message — no headers needed
+        return {};
     },
 
     /**
-     * Returns the authentication_type string for a REST message based on integration type.
-     * Zoom uses OAuth 2.0; all others handle auth via headers at runtime.
+     * Returns 'oauth2' for Zoom integrations.
      */
-    getAuthenticationType: function(integrationType) {
-        switch (integrationType) {
-            case 'zoom':
-                return 'oauth2';
-            case 'slack':
-            case 'jira':
-            case 'twilio':
-            case 'postman':
-                return 'no_authentication';
-            default:
-                return 'no_authentication';
-        }
+    getAuthenticationType: function() {
+        return 'oauth2';
     },
 
     /**
-     * Creates an OAuth 2.0 Entity Profile for Zoom integrations.
-     * Table: oauth_entity_profile
-     * Grant type: client_credentials
-     * Token URL: https://zoom.us/oauth/token
+     * Creates an OAuth 2.0 Entity and Profile for a Zoom integration.
      *
-     * @param {GlideRecord} record - The integration record containing u_client_id and u_client_secret
-     * @returns {string|null} The sys_id of the created OAuth profile, or null on failure
+     * This creates two records:
+     *   1. oauth_entity       — holds client_id, client_secret, token_url
+     *   2. oauth_entity_profile — links to the entity with grant_type: client_credentials
+     *
+     * Zoom's Server-to-Server OAuth uses client_credentials grant:
+     *   POST https://zoom.us/oauth/token
+     *   Authorization: Basic base64(client_id:client_secret)
+     *   grant_type=client_credentials
+     *
+     * @param {GlideRecord} record - Integration record with u_client_id, u_client_secret, u_name
+     * @returns {string|null} sys_id of the created OAuth profile, or null on failure
      */
     createOAuthProfile: function(record) {
         try {
@@ -113,11 +46,11 @@ UniversalAuthManager.prototype = {
             var clientSecret = record.getValue('u_client_secret');
 
             if (!clientId || !clientSecret) {
-                gs.warn('UniversalAuthManager.createOAuthProfile - Missing client_id or client_secret for: ' + integrationName);
+                gs.warn('UniversalAuthManager: Missing client_id or client_secret for "' + integrationName + '"');
                 return null;
             }
 
-            var profileName = 'ZOOM_' + integrationName;
+            var profileName = 'ZOOM_OAUTH_PROFILE_' + integrationName;
 
             // Check if profile already exists
             var existingProfile = new GlideRecord('oauth_entity_profile');
@@ -125,12 +58,12 @@ UniversalAuthManager.prototype = {
             existingProfile.query();
 
             if (existingProfile.next()) {
-                gs.info('OAuth profile ' + profileName + ' already exists - returning existing sys_id');
+                gs.info('OAuth profile "' + profileName + '" already exists — returning existing sys_id');
                 return existingProfile.getUniqueValue();
             }
 
-            // First, create or find the OAuth Entity (oauth_entity)
-            var entityName = 'ZOOM_OAUTH_' + integrationName;
+            // Step 1: Create or find the OAuth Entity
+            var entityName = 'ZOOM_OAUTH_ENTITY_' + integrationName;
 
             var oauthEntity = new GlideRecord('oauth_entity');
             oauthEntity.addQuery('name', entityName);
@@ -139,9 +72,9 @@ UniversalAuthManager.prototype = {
             var entitySysId;
             if (oauthEntity.next()) {
                 entitySysId = oauthEntity.getUniqueValue();
-                gs.info('OAuth entity ' + entityName + ' already exists');
+                gs.info('OAuth entity "' + entityName + '" already exists');
             } else {
-                // Create the OAuth Entity
+                // Create new OAuth Entity
                 var newEntity = new GlideRecord('oauth_entity');
                 newEntity.initialize();
                 newEntity.setValue('name', entityName);
@@ -153,13 +86,13 @@ UniversalAuthManager.prototype = {
                 entitySysId = newEntity.insert();
 
                 if (!entitySysId) {
-                    gs.error('UniversalAuthManager.createOAuthProfile - Failed to create OAuth entity for: ' + integrationName);
+                    gs.error('UniversalAuthManager: Failed to create OAuth entity for "' + integrationName + '"');
                     return null;
                 }
                 gs.info('Created OAuth entity: ' + entityName);
             }
 
-            // Create the OAuth Entity Profile
+            // Step 2: Create the OAuth Entity Profile
             var profile = new GlideRecord('oauth_entity_profile');
             profile.initialize();
             profile.setValue('name', profileName);
@@ -169,7 +102,7 @@ UniversalAuthManager.prototype = {
             var profileSysId = profile.insert();
 
             if (!profileSysId) {
-                gs.error('UniversalAuthManager.createOAuthProfile - Failed to create OAuth profile for: ' + integrationName);
+                gs.error('UniversalAuthManager: Failed to create OAuth profile for "' + integrationName + '"');
                 return null;
             }
 
@@ -177,7 +110,7 @@ UniversalAuthManager.prototype = {
             return profileSysId;
 
         } catch (error) {
-            gs.error('UniversalAuthManager.createOAuthProfile - Error: ' + error.getMessage());
+            gs.error('UniversalAuthManager.createOAuthProfile — Error: ' + error.getMessage());
             return null;
         }
     },

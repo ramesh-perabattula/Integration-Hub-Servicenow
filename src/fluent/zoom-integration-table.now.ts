@@ -1,30 +1,28 @@
 import '@servicenow/sdk/global'
 import { Table, StringColumn, ChoiceColumn } from '@servicenow/sdk/core'
 
-// IMPORTANT: The exported constant name MUST match the name property value
 export const x_1842120_hubby_u_zoom_integration = Table({
     name: 'x_1842120_hubby_u_zoom_integration',
-    label: 'Integration Hub',
+    label: 'Zoom Integration Hub',
     schema: {
-        // EXISTING FIELDS (DO NOT MODIFY - ZOOM COMPATIBILITY)
         u_name: StringColumn({ 
-            label: 'Name', 
+            label: 'Integration Name', 
             mandatory: true,
             maxLength: 100
         }),
         u_client_id: StringColumn({ 
-            label: 'Client ID',
+            label: 'Zoom Client ID',
             maxLength: 100
         }),
         u_client_secret: StringColumn({ 
-            label: 'Client Secret',
+            label: 'Zoom Client Secret',
             maxLength: 255,
             attributes: {
                 password2: true
             }
         }),
         u_methods: StringColumn({ 
-            label: 'Methods',
+            label: 'HTTP Methods',
             maxLength: 255
         }),
         u_rest_message_name: StringColumn({ 
@@ -39,58 +37,6 @@ export const x_1842120_hubby_u_zoom_integration = Table({
             },
             dropdown: 'dropdown_with_none',
             default: 'active'
-        }),
-        
-        // NEW FIELDS (ADDED FOR MULTI-INTEGRATION SUPPORT)
-        u_integration_type: ChoiceColumn({
-            label: 'Integration Type',
-            choices: {
-                zoom: { label: 'Zoom', sequence: 0 },
-                slack: { label: 'Slack', sequence: 1 },
-                jira: { label: 'Jira', sequence: 2 },
-                twilio: { label: 'Twilio', sequence: 3 },
-                postman: { label: 'Postman', sequence: 4 }
-            },
-            dropdown: 'dropdown_with_none',
-            default: 'zoom'
-        }),
-        u_api_key: StringColumn({ 
-            label: 'API Key',
-            maxLength: 255,
-            attributes: {
-                password2: true
-            }
-        }),
-        u_base_url: StringColumn({ 
-            label: 'Base URL',
-            maxLength: 255
-        }),
-        u_project_key: StringColumn({ 
-            label: 'Project Key',
-            maxLength: 100
-        }),
-        u_default_channel: StringColumn({ 
-            label: 'Default Channel',
-            maxLength: 100
-        }),
-        u_account_sid: StringColumn({ 
-            label: 'Account SID',
-            maxLength: 100
-        }),
-        u_auth_token: StringColumn({ 
-            label: 'Auth Token',
-            maxLength: 255,
-            attributes: {
-                password2: true
-            }
-        }),
-        u_phone_number: StringColumn({ 
-            label: 'Phone Number',
-            maxLength: 50
-        }),
-        u_email: StringColumn({ 
-            label: 'Email',
-            maxLength: 255
         }),
     },
     auto_number: {

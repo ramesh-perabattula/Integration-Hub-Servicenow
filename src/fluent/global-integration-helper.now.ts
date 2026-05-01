@@ -1,13 +1,13 @@
 import '@servicenow/sdk/global'
 import { Record } from '@servicenow/sdk/core'
 
-// Create Global Script Include that wraps our scoped IntegrationHelper
+// Global Script Include wrapper — allows cross-scope usage of IntegrationHelper
 export const GlobalIntegrationHelper = Record({
     $id: Now.ID['global_integration_helper'],
     table: 'sys_script_include',
     data: {
         name: 'GlobalIntegrationHelper',
-        description: 'Global wrapper for scoped IntegrationHelper - allows cross-scope usage',
+        description: 'Global wrapper for scoped IntegrationHelper — enables cross-scope Zoom integration execution',
         script: `var GlobalIntegrationHelper = Class.create();
 GlobalIntegrationHelper.prototype = {
     initialize: function(name) {
