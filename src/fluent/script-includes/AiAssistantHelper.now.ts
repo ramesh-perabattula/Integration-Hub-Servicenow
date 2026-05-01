@@ -7,6 +7,5 @@ export const AiAssistantHelperScriptInclude = ScriptInclude({
     name: 'AiAssistantHelper',
     script: AiAssistantHelper,
     clientCallable: true,
-    description: 'Ajax helper for the Floating AI Assistant to call Gemini REST Message',
-    access: 'public'
+    description: 'Ajax helper for the Floating AI Assistant to call Gemini REST Message'
 })
