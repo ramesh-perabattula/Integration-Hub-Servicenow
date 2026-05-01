@@ -32,7 +32,6 @@ export function createZoomREST(current, previous) {
         restMsg.initialize();
         restMsg.setValue('name', restMessageName);
         restMsg.setValue('endpoint', 'https://api.zoom.us/v2');
-        restMsg.setValue('authentication_type', 'no_authentication');
         restMsg.setValue('description', 'Zoom API — auto-created by Integration Hub for "' + name + '"');
         var restMsgId = restMsg.insert();
 
@@ -41,6 +40,30 @@ export function createZoomREST(current, previous) {
             return;
         }
         gs.info('Integration Hub: Created REST Message "' + restMessageName + '" (sys_id: ' + restMsgId + ')');
+
+        // Helper function (defined inside to ensure SDK bundles it correctly)
+        function _createMethod(funcName, httpMethod, endpoint, bodyTemplate) {
+            var method = new GlideRecord('sys_rest_message_fn');
+            method.initialize();
+            method.setValue('rest_message', restMsgId);
+            method.setValue('function_name', funcName);
+            method.setValue('http_method', httpMethod);
+            method.setValue('rest_endpoint', endpoint);
+            if (bodyTemplate) {
+                method.setValue('content', bodyTemplate);
+            }
+            var methodId = method.insert();
+
+            if (methodId) {
+                var header = new GlideRecord('sys_rest_message_fn_headers');
+                header.initialize();
+                header.setValue('rest_message_fn', methodId);
+                header.setValue('name', 'Content-Type');
+                header.setValue('value', 'application/json');
+                header.insert();
+                gs.info('Integration Hub: Created method ' + funcName + ' (' + httpMethod + ')');
+            }
+        }
 
         // ── Step 3: Create HTTP Methods ──
         var methods = current.getValue('u_methods') || 'POST,GET,PATCH,DELETE';
@@ -52,18 +75,18 @@ export function createZoomREST(current, previous) {
 
             switch (verb) {
                 case 'POST':
-                    _createMethod(restMsgId, 'create_meeting', 'POST', '/users/me/meetings',
+                    _createMethod('create_meeting', 'POST', '/users/me/meetings',
                         '{\n  "topic": "${topic}",\n  "type": 2,\n  "duration": "${duration}"\n}');
                     break;
                 case 'GET':
-                    _createMethod(restMsgId, 'get_meeting', 'GET', '/meetings/${meetingId}', '');
+                    _createMethod('get_meeting', 'GET', '/meetings/${meetingId}', '');
                     break;
                 case 'PATCH':
-                    _createMethod(restMsgId, 'update_meeting', 'PATCH', '/meetings/${meetingId}',
+                    _createMethod('update_meeting', 'PATCH', '/meetings/${meetingId}',
                         '{\n  "topic": "${topic}",\n  "duration": "${duration}"\n}');
                     break;
                 case 'DELETE':
-                    _createMethod(restMsgId, 'delete_meeting', 'DELETE', '/meetings/${meetingId}', '');
+                    _createMethod('delete_meeting', 'DELETE', '/meetings/${meetingId}', '');
                     break;
             }
         }
@@ -72,29 +95,5 @@ export function createZoomREST(current, previous) {
 
     } catch (err) {
         gs.error('Integration Hub: ' + ((err.getMessage ? err.getMessage() : err.message) || String(err)));
-    }
-}
-
-function _createMethod(restMsgId, funcName, httpMethod, endpoint, bodyTemplate) {
-    var method = new GlideRecord('sys_rest_message_fn');
-    method.initialize();
-    method.setValue('rest_message', restMsgId);
-    method.setValue('function_name', funcName);
-    method.setValue('http_method', httpMethod);
-    method.setValue('rest_endpoint', endpoint);
-    if (bodyTemplate) {
-        method.setValue('content', bodyTemplate);
-    }
-    var methodId = method.insert();
-
-    if (methodId) {
-        // Add Content-Type header
-        var header = new GlideRecord('sys_rest_message_fn_headers');
-        header.initialize();
-        header.setValue('rest_message_fn', methodId);
-        header.setValue('name', 'Content-Type');
-        header.setValue('value', 'application/json');
-        header.insert();
-        gs.info('Integration Hub: Created method ' + funcName + ' (' + httpMethod + ')');
     }
 }
