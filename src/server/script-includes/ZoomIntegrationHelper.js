@@ -59,21 +59,8 @@ IntegrationHelper.prototype = {
             // Prepare request
             requestData = this._prepareRequestData(action, payload);
 
-            // Execute with retry
-            while (retryCount <= maxRetries) {
-                try {
-                    responseBody = this._executeRestCall(methodName, requestData, payload);
-                    break; // Success
-                } catch (e) {
-                    retryCount++;
-                    if (retryCount > maxRetries) {
-                        throw e;
-                    }
-                    gs.info('IntegrationHelper: Retry attempt ' + retryCount + ' for ' + this.integrationName + ' — ' + action);
-                    // Wait 1 second between retries
-                    java.lang.Thread.sleep(1000);
-                }
-            }
+            // Execute the REST call (no retry — avoids scoped app restrictions on java.lang.Thread)
+            responseBody = this._executeRestCall(methodName, requestData, payload);
 
         } catch (error) {
             status = 'failure';

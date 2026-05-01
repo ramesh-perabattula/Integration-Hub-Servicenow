@@ -27,21 +27,29 @@ export function createZoomREST(current, previous) {
             return;
         }
 
-        // Create OAuth profile for Zoom
-        var authManager = new UniversalAuthManager();
-        var oauthProfileSysId = authManager.createOAuthProfile(current);
+        // Try to create OAuth profile (non-blocking — REST message creation should proceed regardless)
+        var oauthProfileSysId = null;
+        try {
+            var authManager = new UniversalAuthManager();
+            oauthProfileSysId = authManager.createOAuthProfile(current);
+        } catch (oauthErr) {
+            gs.warn('Integration Hub: OAuth profile creation skipped — ' + ((oauthErr.getMessage ? oauthErr.getMessage() : oauthErr.message) || String(oauthErr)));
+            gs.warn('Integration Hub: You can manually configure OAuth for REST Message: ' + restMessageName);
+        }
 
         // Create the REST Message with OAuth2 auth
         var restMessage = new GlideRecord('sys_rest_message');
         restMessage.initialize();
         restMessage.setValue('name', restMessageName);
         restMessage.setValue('endpoint', 'https://api.zoom.us/v2');
-        restMessage.setValue('authentication_type', 'oauth2');
         restMessage.setValue('description', 'Zoom API integration for ' + name + ' — auto-created by Integration Hub');
 
-        // Link OAuth profile if created
+        // Set auth type based on whether OAuth profile was created
         if (oauthProfileSysId) {
+            restMessage.setValue('authentication_type', 'oauth2');
             restMessage.setValue('oauth2_profile', oauthProfileSysId);
+        } else {
+            restMessage.setValue('authentication_type', 'no_authentication');
         }
 
         var restMessageSysId = restMessage.insert();
