@@ -143,6 +143,7 @@ export default function ZoomIntegrationForm() {
 
       // Step 3: Configure backend services (simulated delay for BR)
       updateProgress(2, 'active', 'Configuring REST Message and Methods...');
+      var info = { recName: recName, recRest: recRest, rec: rec };
       return new Promise(function(resolve) { setTimeout(function() { resolve(info); }, 1500); });
     })
     .then(function(info) {
