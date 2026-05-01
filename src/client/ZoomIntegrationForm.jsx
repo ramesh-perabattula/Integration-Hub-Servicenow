@@ -51,16 +51,17 @@ export default function ZoomIntegrationForm() {
   }
 
   function triggerConfetti() {
-    var colors = ['#6366f1', '#818cf8', '#22c55e', '#a855f7', '#ec4899'];
-    for (var i = 0; i < 50; i++) {
+    // Professional, subtle colors for the clean SaaS theme
+    var colors = ['#3b82f6', '#6366f1', '#10b981', '#a1a1aa', '#f4f4f5'];
+    for (var i = 0; i < 40; i++) {
       var conf = document.createElement('div');
       conf.className = 'confetti';
       conf.style.left = Math.random() * 100 + 'vw';
       conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-      conf.style.animationDuration = (Math.random() * 2 + 1) + 's';
+      conf.style.animationDuration = (Math.random() * 1.5 + 1.5) + 's';
       conf.style.animationDelay = (Math.random() * 0.5) + 's';
       document.body.appendChild(conf);
-      setTimeout((function(c) { return function() { if(c.parentNode) c.parentNode.removeChild(c); }; })(conf), 3000);
+      setTimeout((function(c) { return function() { if(c.parentNode) c.parentNode.removeChild(c); }; })(conf), 3500);
     }
   }
 
